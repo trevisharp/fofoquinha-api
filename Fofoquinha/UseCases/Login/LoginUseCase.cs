@@ -1,4 +1,3 @@
-using System.IO.Pipes;
 using Fofoquinha.Services.JWT;
 using Fofoquinha.Services.Password;
 using Fofoquinha.Services.Profiles;
