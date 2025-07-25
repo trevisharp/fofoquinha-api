@@ -1,6 +1,9 @@
 using System.Text;
+using Fofoquinha.Endpoints;
 using Fofoquinha.Models;
+using Fofoquinha.Services.JWT;
 using Fofoquinha.Services.Password;
+using Fofoquinha.Services.Profiles;
 using Fofoquinha.UseCases;
 using Fofoquinha.UseCases.DeletePost;
 using Fofoquinha.UseCases.GetProfileData;
@@ -18,6 +21,8 @@ builder.Services.AddDbContext<FofoquinhaDbContext>(options => {
 });
 
 builder.Services.AddTransient<IPasswordService, PBKDF2PasswordService>();
+builder.Services.AddTransient<IProfilesService, EFProfileService>();
+builder.Services.AddSingleton<IJWTService, JWTService>();
 
 builder.Services.AddTransient<LoginUseCase>();
 builder.Services.AddTransient<DeletePostUseCase>();
@@ -44,12 +49,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddSwaggerGen();
+
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.ConfigureAuthEndpoints();
+app.ConfigurePostEndpoints();
+app.ConfigureProfileEndpoints();
 
 app.Run();

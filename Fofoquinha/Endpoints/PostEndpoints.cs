@@ -44,6 +44,6 @@ public static class PostEndpoints
                 (false, _) => Results.BadRequest(),
                 (true, _) => Results.Ok()
             };
-        });
+        }).RequireAuthorization();
     }
 }
