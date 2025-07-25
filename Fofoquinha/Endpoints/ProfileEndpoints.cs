@@ -19,7 +19,7 @@ public static class ProfileEndpoints
             return (result.IsSuccess, result.Reason) switch
             {
                 (false, "User not found")  => Results.NotFound(),
-                (false, _) => Results.InternalServerError(),
+                (false, _) => Results.BadRequest(),
                 (true, _) => Results.Ok(result.Data)
             };
 
@@ -31,7 +31,7 @@ public static class ProfileEndpoints
         {
             var result = await useCase.Do(payload);
             if (result.IsSuccess)
-                return Results.Ok();
+                return Results.Created();
             
             return Results.BadRequest(result.Reason);
         });

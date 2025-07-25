@@ -1,3 +1,6 @@
+using Fofoquinha.UseCases.PublishPost;
+using Microsoft.AspNetCore.Mvc;
+
 namespace Fofoquinha.Endpoints;
 
 public static class PostEndpoints
@@ -9,9 +12,18 @@ public static class PostEndpoints
 
         });
 
-        app.MapPost("post", () =>
+        app.MapPost("post", async (
+            [FromBody]PublishPostPayload payload,
+            [FromServices]PublishPostUseCase useCase) =>
         {
-
+            var result = await useCase.Do(payload);
+            
+            return (result.IsSuccess, result.Reason) switch
+            {
+                (false, "Post not found") => Results.NotFound(),
+                (false, _) => Results.BadRequest(),
+                (true, _) => Results.Ok(result.Data)
+            };
         });
 
         app.MapDelete("post/{id}", (string id) =>
