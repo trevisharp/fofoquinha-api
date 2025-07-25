@@ -1,11 +1,14 @@
+using System.Text;
 using Fofoquinha.Models;
+using Fofoquinha.Services.Password;
 using Fofoquinha.UseCases;
 using Fofoquinha.UseCases.DeletePost;
 using Fofoquinha.UseCases.GetProfileData;
 using Fofoquinha.UseCases.Login;
 using Fofoquinha.UseCases.PublishPost;
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,11 +17,33 @@ builder.Services.AddDbContext<FofoquinhaDbContext>(options => {
     options.UseSqlServer(sqlConn);
 });
 
+builder.Services.AddTransient<IPasswordService, PBKDF2PasswordService>();
+
 builder.Services.AddTransient<LoginUseCase>();
 builder.Services.AddTransient<DeletePostUseCase>();
 builder.Services.AddTransient<CreateProfileUseCase>();
 builder.Services.AddTransient<PublishPostUseCase>();
 builder.Services.AddTransient<GetProfileDataUseCase>();
+
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+var keyBytes = Encoding.UTF8.GetBytes(jwtSecret);
+var key = new SymmetricSecurityKey(keyBytes);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new()
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidIssuer = "fofoquinha-app",
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+            IssuerSigningKey = key,
+        };
+    });
+
 
 var app = builder.Build();
 

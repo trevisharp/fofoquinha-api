@@ -1,29 +1,50 @@
-using Fofoquinha.UseCases;
+using Fofoquinha.Models;
+using Fofoquinha.Services.JWT;
+using Fofoquinha.Services.Password;
+using Fofoquinha.Services.Profiles;
+using Fofoquinha.UseCases.Login;
+using Moq;
 using Xunit;
 
 namespace Fofoquinha.Tests;
 
-public class SomaFoda
-{
-    public int Somar(int a, int b)
-        => a + b;
-}
-
 public class AuthTest
 {
-    [Fact]
-    public void TestSoma()
+    [Theory]
+    [InlineData("minhasenhaA", "minhasenhaA", true)]
+    [InlineData("1232132132131", "asdafafafd", false)]
+    [InlineData("", "a", false)]
+    [InlineData("acomplexpasswordhaha123", "acomplexpasswordhaha123", true)]
+    [InlineData(null, "acomplexpasswordhaha123", false)]
+    public void TestPasswordHash(string senha1, string senha2, bool result)
     {
-        var soma = new SomaFoda();
-        Assert.Equal(5, soma.Somar(2, 3));
-        Assert.Equal(0, soma.Somar(-4, 4));
-        Assert.Equal(5, soma.Somar(5, 0));
-        Assert.Equal(-3, soma.Somar(3, -6));
+        var hasher = new PBKDF2PasswordService();
+        var hash = hasher.Hash(senha1);
+        var ok = hasher.Compare(senha2, hash);
+        Assert.Equal(result, ok);
     }
 
-    // [Fact]
-    // public void TestCreateAccount()
-    // {
-    //     var useCase = new CreateProfileUseCase();
-    // }
+    [Fact]
+    public async Task TestLogin()
+    {
+        var profileService = new Mock<IProfilesService>();
+        profileService.Setup(s => s.FindByLogin("trevis"))
+            .ReturnsAsync(new Profile {
+                Username = "trevis",
+                Password = "hash_da_senha"
+            });
+        var passworService = new Mock<IPasswordService>();
+        passworService.Setup(s => s.Compare("cristianS2", "hash_da_senha"))
+            .Returns(true);
+        var jwtSevice = new Mock<IJWTService>();
+
+        var useCase = new LoginUseCase(
+            profileService.Object,
+            passworService.Object,
+            jwtSevice.Object
+        );
+
+        var result = await useCase.Do(new LoginPayload("trevis", "cristianS2"));
+        Assert.True(result.IsSuccess);
+    }
 }
