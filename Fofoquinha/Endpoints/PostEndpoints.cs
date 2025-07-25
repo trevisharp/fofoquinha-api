@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Fofoquinha.UseCases.DeletePost;
 using Fofoquinha.UseCases.PublishPost;
 using Microsoft.AspNetCore.Mvc;
@@ -28,10 +29,12 @@ public static class PostEndpoints
         });
 
         app.MapDelete("post/{id}", async (string id, 
+            HttpContext http,
             [FromServices]DeletePostUseCase useCase) =>
         {
+            var claim = http.User.FindFirst(ClaimTypes.NameIdentifier);
+            var userId = Guid.Parse(claim.Value);
             var postId = Guid.Parse(id);
-            Guid userId = Guid.Empty; // ????
             var payload = new DeletePostPayload(postId, userId);
             var result = await useCase.Do(payload);
 
